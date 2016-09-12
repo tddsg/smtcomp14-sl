@@ -46,7 +46,7 @@ sl_record_2songbird (FILE * fout, sl_record_t * r)
       sl_field_t *fldi = sl_vector_at (fields_array, fi);
       fprintf (fout, "\n\t%s %s;", sl_record_name (fldi->pto_r), fldi->name);
     }
-  fprintf (fout, "\n}.\n");
+  fprintf (fout, "\n};\n");
 }
 
 /* ====================================================================== */
@@ -55,12 +55,12 @@ sl_record_2songbird (FILE * fout, sl_record_t * r)
 
 char *
 sl_var_2songbird (sl_var_array * args, sl_var_array * lvars, uid_t vid,
-	       bool inpred)
+                  bool inpred)
 {
 
   char *vname;
-  if (inpred && vid == 1)
-    return "self";
+  /* if (inpred && vid == 1) */
+  /*   return "self"; */
 
   if (vid == VNIL_ID)
     return "null";
@@ -78,15 +78,15 @@ sl_var_2songbird (sl_var_array * args, sl_var_array * lvars, uid_t vid,
 
 void
 sl_var_array_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
-		     sl_uid_array * va, uint_t start, bool inpred)
+                        sl_uid_array * va, uint_t start, bool inpred)
 {
 
   for (uint_t i = start; i < sl_vector_size (va); i++)
     {
       if (i > start)
-	fprintf (fout, ",");
+        fprintf (fout, ",");
       fprintf (fout, "%s", sl_var_2songbird (args, lvars,
-					  sl_vector_at (va, i), inpred));
+                                             sl_vector_at (va, i), inpred));
     }
 }
 
@@ -96,7 +96,7 @@ sl_var_array_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
 
 void
 sl_pure_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
-		sl_pure_t * form, bool inpred)
+                   sl_pure_t * form, bool inpred)
 {
   assert (NULL != form);
 
@@ -106,12 +106,12 @@ sl_pure_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
   char *vright = sl_var_2songbird (args, lvars, form->vright, inpred);
 
   fprintf (fout, "%s%s%s", vleft,
-	   (form->op == SL_PURE_EQ) ? "=" : "!=", vright);
+           (form->op == SL_PURE_EQ) ? "=" : "!=", vright);
 }
 
 void
 sl_space_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
-		 sl_space_t * form, bool inpred)
+                    sl_space_t * form, bool inpred)
 {
 
   assert (NULL != form);
@@ -121,43 +121,40 @@ sl_space_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
     {
     case SL_SPACE_PTO:
       {
-	// print source
-	sl_var_array *src_vars = (args == NULL
-				  || (form->m.pto.sid >
-				      sl_vector_size (args))) ? lvars : args;
-	fprintf (fout, "%s::%s",
-		 sl_var_2songbird (args, lvars, form->m.pto.sid, inpred),
-		 sl_record_name (sl_var_record (src_vars, form->m.pto.sid)));
-	// print destinations
-	fprintf (fout, "<");
-	for (size_t i = 0; i < sl_vector_size (form->m.pto.dest); i++)
-	  {
-	    uid_t fi = sl_vector_at (form->m.pto.fields, i);
-	    uid_t vi = sl_vector_at (form->m.pto.dest, i);
-	    fprintf (fout, "%s%s:%s", (i > 0) ? "," : "",
-		     sl_field_name (fi),
-		     sl_var_2songbird (args, lvars, vi, inpred));
-	  }
-	fprintf (fout, ">");
-	break;
+        // print source
+        sl_var_array *src_vars = (args == NULL
+                                  || (form->m.pto.sid >
+                                      sl_vector_size (args))) ? lvars : args;
+        fprintf (fout, "%s::%s",
+                 sl_var_2songbird (args, lvars, form->m.pto.sid, inpred),
+                 sl_record_name (sl_var_record (src_vars, form->m.pto.sid)));
+        // print destinations
+        fprintf (fout, "<");
+        for (size_t i = 0; i < sl_vector_size (form->m.pto.dest); i++)
+          {
+            uid_t fi = sl_vector_at (form->m.pto.fields, i);
+            uid_t vi = sl_vector_at (form->m.pto.dest, i);
+            fprintf (fout, "%s%s:%s", (i > 0) ? "," : "",
+                     sl_field_name (fi),
+                     sl_var_2songbird (args, lvars, vi, inpred));
+          }
+        fprintf (fout, ">");
+        break;
       }
 
     case SL_SPACE_LS:
       {
-	// print first argument and predicate
-	fprintf (fout, "%s::%s<",
-		 sl_var_2songbird (args, lvars,
-				sl_vector_at (form->m.ls.args, 0), inpred),
-		 sl_pred_name (form->m.ls.pid));
-	// print remainder arguments
-	sl_var_array_2songbird (fout, args, lvars, form->m.ls.args, 1, inpred);
-	fprintf (fout, ">");
-	break;
+        // print predicate
+        fprintf (fout, "%s(", sl_pred_name (form->m.ls.pid));
+        // print arguments
+        sl_var_array_2songbird (fout, args, lvars, form->m.ls.args, 0, inpred);
+        fprintf (fout, ")");
+        break;
       }
 
     default:
       {
-	sl_error (1, "sl_space_2songbird:", "spatial formula not LS or PTO");
+        sl_error (1, "sl_space_2songbird:", "spatial formula not LS or PTO");
       }
     }
 }
@@ -177,45 +174,45 @@ sl_form_2songbird (FILE * fout, sl_form_t * form)
     {
 
       switch (form->space->kind)
-	{
-	case SL_SPACE_PTO:
-	case SL_SPACE_LS:
-	  {
+        {
+        case SL_SPACE_PTO:
+        case SL_SPACE_LS:
+          {
 
-	    if (nbc > 0)
-	      fprintf (fout, " * ");
-	    sl_space_2songbird (fout, NULL, form->lvars, form->space, false);
-	    nbc++;
-	    break;
-	  }
-	case SL_SPACE_SSEP:
-	  {
-	    for (size_t i = 0; i < sl_vector_size (form->space->m.sep); i++)
-	      {
-		if (nbc > 0)
-		  fprintf (fout, " * ");
-		sl_space_2songbird (fout, NULL, form->lvars,
-				 sl_vector_at (form->space->m.sep, i), false);
-		fflush (fout);
-		nbc++;
-	      }
-	    break;
-	  }
-	default:
-	  {
-	    sl_error (1, "sl_form_2songbird:", "not a PTO, LS, SSEP formula");
-	    return;
-	  }
-	}
+            if (nbc > 0)
+              fprintf (fout, " * ");
+            sl_space_2songbird (fout, NULL, form->lvars, form->space, false);
+            nbc++;
+            break;
+          }
+        case SL_SPACE_SSEP:
+          {
+            for (size_t i = 0; i < sl_vector_size (form->space->m.sep); i++)
+              {
+                if (nbc > 0)
+                  fprintf (fout, " * ");
+                sl_space_2songbird (fout, NULL, form->lvars,
+                                    sl_vector_at (form->space->m.sep, i), false);
+                fflush (fout);
+                nbc++;
+              }
+            break;
+          }
+        default:
+          {
+            sl_error (1, "sl_form_2songbird:", "not a PTO, LS, SSEP formula");
+            return;
+          }
+        }
     }
 
   // start with spatial formula
   for (size_t i = 0; i < sl_vector_size (form->pure); i++)
     {
       if (nbc > 0)
-	fprintf (fout, " & ");
+        fprintf (fout, " & ");
       sl_pure_2songbird (fout, NULL, form->lvars, sl_vector_at (form->pure, i),
-		      false);
+                         false);
       fflush (fout);
       nbc++;
     }
@@ -241,12 +238,12 @@ sl_pred_case_2songbird (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
     {
       fprintf (fout, "exists ");
       for (size_t i = 0; i < sl_vector_size (c->lvars); i++)
-	{
-	  if (i > 0)
-	    fprintf (fout, ",");
-	  fprintf (fout, "%s",
-		   sl_var_2songbird (args, c->lvars, c->argc + i + 1, true));
-	}
+        {
+          if (i > 0)
+            fprintf (fout, ",");
+          fprintf (fout, "%s",
+                   sl_var_2songbird (args, c->lvars, c->argc + i + 1, true));
+        }
       fprintf (fout, ": ");
     }
 
@@ -254,7 +251,7 @@ sl_pred_case_2songbird (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
   for (size_t i = 0; i < sl_vector_size (c->space); i++)
     {
       if (nbc > 0)
-	fprintf (fout, " * ");
+        fprintf (fout, " * ");
       sl_space_2songbird (fout, args, c->lvars, sl_vector_at (c->space, i), true);	// in predicate
       fflush (fout);
       nbc++;
@@ -264,10 +261,10 @@ sl_pred_case_2songbird (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
   for (size_t i = 0; i < sl_vector_size (c->pure); i++)
     {
       if (nbc > 0)
-	fprintf (fout, " & ");
+        fprintf (fout, " & ");
       else {
-	fprintf (fout, " emp & ");
-	nbc++;
+        fprintf (fout, " emp & ");
+        nbc++;
       }
       sl_pure_2songbird (fout, args, c->lvars, sl_vector_at (c->pure, i), true);	// in predicate
       fflush (fout);
@@ -277,9 +274,9 @@ sl_pred_case_2songbird (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
   if (nbc == 0) {
     // maybe emp or junk
     if (c->is_precise)
-       fprintf (fout, "emp");
+      fprintf (fout, "emp");
     else
-       fprintf (fout, "true");
+      fprintf (fout, "true");
     nbc++;
   }
 
@@ -303,27 +300,27 @@ sl_pred_2songbird (FILE * fout, sl_pred_t * p)
   assert (NULL != p->def);
 
   // print predicate instance
-  fprintf (fout, "\npred %s<", p->pname);
+  fprintf (fout, "\npred %s(", p->pname);
   for (size_t vi = 2; vi <= p->def->argc; vi++)
     {
       if (vi > 2)
-	fprintf (fout, ",");
+        fprintf (fout, ",");
       fprintf (fout, "%s", sl_var_2songbird (NULL, p->def->args, vi, false));
     }
-  fprintf (fout, "> ==  ");
+  fprintf (fout, ") ==  ");
 
   // Print all cases
   for (size_t i = 0; i < sl_vector_size (p->def->cases); i++)
     {
       // print separator
       if (i > 0)
-	fprintf (fout, "\n\tor  ");
+        fprintf (fout, "\n\tor  ");
       // print formula using self for the first parameter
       sl_pred_case_2songbird (fout, p->def->args,
-			   sl_vector_at (p->def->cases, i));
+                              sl_vector_at (p->def->cases, i));
     }
 
-  fprintf (fout, "\n.\n");
+  fprintf (fout, "\n;\n");
 }
 
 
@@ -341,7 +338,7 @@ sl_prob_2songbird (const char *fname)
 
   /* Output filename */
   char *fname_out = (char *) malloc (strlen (fname) + 10);
-  snprintf (fname_out, strlen (fname) + 10, "%s.sle", fname);
+  snprintf (fname_out, strlen (fname) + 10, "%s.sb", fname);
 
   /* Output file */
   sl_message ("\tOutput file: ");
@@ -379,7 +376,7 @@ sl_prob_2songbird (const char *fname)
     // translate negative formula
     sl_form_2songbird (fout, sl_vector_at (sl_prob->nform, 0));
 
-  fprintf (fout, ".\n");
+  fprintf (fout, ";\n");
 
   fclose (fout);
   sl_message ("\nDone\n");
