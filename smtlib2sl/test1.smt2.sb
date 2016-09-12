@@ -1,0 +1,19 @@
+
+data GTyp {
+	GTyp f0;
+	GTyp f1;
+};
+
+pred p<> ==  (exists x: x::GTyp<f0:nil> & y=x & nil!=x)
+;
+
+pred q<> ==  (y::GTyp<f0:nil> & nil!=y)
+;
+
+pred r<> ==  (exists z: y::GTyp<f0:z> * p(y) & nil!=y)
+;
+
+
+checkentail r(x0)
+	 |- false
+;

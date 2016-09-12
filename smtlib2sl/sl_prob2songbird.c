@@ -88,6 +88,7 @@ sl_var_array_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
       fprintf (fout, "%s", sl_var_2songbird (args, lvars,
                                              sl_vector_at (va, i), inpred));
     }
+
 }
 
 /* ====================================================================== */
@@ -244,7 +245,7 @@ sl_pred_case_2songbird (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
           fprintf (fout, "%s",
                    sl_var_2songbird (args, c->lvars, c->argc + i + 1, true));
         }
-      fprintf (fout, ": ");
+      fprintf (fout, ". ");
     }
 
   // start with spatial formulas
@@ -301,9 +302,9 @@ sl_pred_2songbird (FILE * fout, sl_pred_t * p)
 
   // print predicate instance
   fprintf (fout, "\npred %s(", p->pname);
-  for (size_t vi = 2; vi <= p->def->argc; vi++)
+  for (size_t vi = 1; vi <= p->def->argc; vi++)
     {
-      if (vi > 2)
+      if (vi > 1)
         fprintf (fout, ",");
       fprintf (fout, "%s", sl_var_2songbird (NULL, p->def->args, vi, false));
     }
