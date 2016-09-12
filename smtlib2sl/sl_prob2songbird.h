@@ -16,22 +16,22 @@
 /*                                                                        */
 /**************************************************************************/
 
-/* Translation to SLP format
+/* Translation to Songbird format
  */
 
-#ifndef _SL_PROB2SLP_H_
-#define _SL_PROB2SLP_H_
+#ifndef _SL_PROB2SB_H_
+#define _SL_PROB2SB_H_
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-  void sl_prob_2slp (const char *fname);
-  /* Translates into file fname.sle */
+  void sl_prob_2songbird (const char *fname);
+  /* Translates into file fname.sb */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif				/* _SL_PROB2SLP_H_ */
+#endif				/* _SL_PROB2SB_H_ */

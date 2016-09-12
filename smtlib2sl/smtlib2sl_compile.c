@@ -20,6 +20,7 @@
 #include "smtlib2sl.h"
 #include "sl_prob2cyclist.h"
 #include "sl_prob2sleek.h"
+#include "sl_prob2songbird.h"
 #include "sl_prob2slide.h"
 #include "sl_prob2slp.h"
 #include "sl_prob2spen.h"
@@ -33,6 +34,7 @@ typedef enum sl_format_t
   SL_FORMAT_SL = 0,
   SL_FORMAT_CYCLIST,
   SL_FORMAT_SLEEK,
+  SL_FORMAT_SONGBIRD,
   SL_FORMAT_SLIDE,
   SL_FORMAT_SLP,
   SL_FORMAT_SPEN,
@@ -40,7 +42,7 @@ typedef enum sl_format_t
 } sl_format_t;
 
 /* set by options */
-bool sl_compile[SL_FORMAT_OTHER] = { true, false, false, false, false, false };
+bool sl_compile[SL_FORMAT_OTHER] = { true, false, false, false, false, false, false };
 
 /* ====================================================================== */
 /* MAIN/Main/main */
@@ -56,6 +58,8 @@ sl_set_option (char *option)
     sl_compile[SL_FORMAT_CYCLIST] = true;
   else if (0 == strcmp (option, "-sleek"))
     sl_compile[SL_FORMAT_SLEEK] = true;
+  else if (0 == strcmp (option, "-songbird"))
+    sl_compile[SL_FORMAT_SONGBIRD] = true;
   else if (0 == strcmp (option, "-slide"))
     sl_compile[SL_FORMAT_SLIDE] = true;
   else if (0 == strcmp (option, "-slp"))
@@ -75,7 +79,7 @@ print_help (void)
 {
   printf
     ("smtlib2sl_compile: compiling SMTLIB v2 format for Separation Logic\n");
-  printf ("Usage: smtlib2sl_compile [-cyclist|-sleek|-slide|-slp] <file>\n");
+  printf ("Usage: smtlib2sl_compile [-cyclist|-sleek|-songbird|-slide|-slp] <file>\n");
   printf ("\t<file>: input file in the SMTLIB v2 format for QF_S\n");
 }
 
@@ -130,6 +134,9 @@ main (int argc, char **argv)
 	  break;
 	case SL_FORMAT_SLEEK:
 	  sl_prob_2sleek (argv[arg_file]);
+	  break;
+	case SL_FORMAT_SONGBIRD:
+	  sl_prob_2songbird (argv[arg_file]);
 	  break;
 	case SL_FORMAT_SLIDE:
 	  sl_prob_2slide (argv[arg_file]);
