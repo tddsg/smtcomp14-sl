@@ -60,8 +60,6 @@ sl_var_2songbird (sl_var_array * args, sl_var_array * lvars, uid_t vid,
 {
 
   char *vname;
-  /* if (inpred && vid == 1) */
-  /*   return "self"; */
 
   if (vid == VNIL_ID)
     return "null";
@@ -206,6 +204,10 @@ sl_form_2songbird (FILE * fout, sl_form_t * form)
             return;
           }
         }
+    }
+    else {
+        fprintf (fout, "emp");
+        nbc++;
     }
 
   // start with spatial formula
