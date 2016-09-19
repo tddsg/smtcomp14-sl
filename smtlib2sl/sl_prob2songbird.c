@@ -28,6 +28,7 @@
 #include "sl_prob.h"
 #include "sl_prob2songbird.h"
 
+char* indent = "    ";
 
 /* ====================================================================== */
 /* Records */
@@ -44,7 +45,7 @@ sl_record_2songbird (FILE * fout, sl_record_t * r)
     {
       uid_t fi = sl_vector_at (r->flds, i);
       sl_field_t *fldi = sl_vector_at (fields_array, fi);
-      fprintf (fout, "\n\t%s %s;", sl_record_name (fldi->pto_r), fldi->name);
+      fprintf (fout, "\n %s%s %s;", indent, sl_record_name (fldi->pto_r), fldi->name);
     }
   fprintf (fout, "\n};\n");
 }
@@ -67,11 +68,11 @@ sl_var_2songbird (sl_var_array * args, sl_var_array * lvars, uid_t vid,
 
   uid_t fstlocal = (args == NULL) ? 0 : sl_vector_size (args);
   if (vid >= fstlocal)
-    {
+  {
       vname = sl_var_name (lvars, vid - fstlocal, SL_TYP_RECORD);
-    }
+  }
   else
-    vname = sl_var_name (args, vid, SL_TYP_RECORD);
+      vname = sl_var_name (args, vid, SL_TYP_RECORD);
   return (vname[0] == '?') ? vname + 1 : vname;
 }
 
@@ -264,7 +265,7 @@ sl_pred_case_2songbird (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
       if (nbc > 0)
         fprintf (fout, " & ");
       else {
-        fprintf (fout, " emp & ");
+        fprintf (fout, "emp & ");
         nbc++;
       }
       sl_pure_2songbird (fout, args, c->lvars, sl_vector_at (c->pure, i), true);	// in predicate
@@ -308,20 +309,23 @@ sl_pred_2songbird (FILE * fout, sl_pred_t * p)
         fprintf (fout, ",");
       fprintf (fout, "%s", sl_var_2songbird (NULL, p->def->args, vi, false));
     }
-  fprintf (fout, ") ==  ");
+  fprintf (fout, ") := ");
+
+  if (sl_vector_size (p->def->cases) > 1)
+      fprintf (fout, "\n%s", indent);
 
   // Print all cases
   for (size_t i = 0; i < sl_vector_size (p->def->cases); i++)
     {
       // print separator
       if (i > 0)
-        fprintf (fout, "\n\tor  ");
+          fprintf (fout, "\n%s\\/ ", indent);
       // print formula using self for the first parameter
       sl_pred_case_2songbird (fout, p->def->args,
                               sl_vector_at (p->def->cases, i));
     }
 
-  fprintf (fout, "\n;\n");
+  fprintf (fout, ";\n");
 }
 
 
@@ -369,10 +373,10 @@ sl_prob_2songbird (const char *fname)
   // translate positive formula
   sl_form_2songbird (fout, sl_prob->pform);
 
-  fprintf (fout, "\n\t |- ");
+  fprintf (fout, "\n%s|- ", indent);
 
   if (sl_vector_empty (sl_prob->nform))
-    fprintf (fout, "false\n");
+    fprintf (fout, "false");
   else
     // translate negative formula
     sl_form_2songbird (fout, sl_vector_at (sl_prob->nform, 0));
