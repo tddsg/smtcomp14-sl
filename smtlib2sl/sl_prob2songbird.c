@@ -45,7 +45,7 @@ sl_record_2songbird (FILE * fout, sl_record_t * r)
     {
       uid_t fi = sl_vector_at (r->flds, i);
       sl_field_t *fldi = sl_vector_at (fields_array, fi);
-      fprintf (fout, "\n %s%s %s;", indent, sl_record_name (fldi->pto_r), fldi->name);
+      fprintf (fout, "\n%s%s %s;", indent, sl_record_name (fldi->pto_r), fldi->name);
     }
   fprintf (fout, "\n};\n");
 }
