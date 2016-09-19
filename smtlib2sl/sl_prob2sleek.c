@@ -33,6 +33,24 @@
 /* Records */
 /* ====================================================================== */
 
+char* sleek_keywords [] = { "par" };
+
+char* trans_sleek_keywords (char* varname) {
+    if (sleek_keywords != NULL)
+    {
+        int len = sizeof(sleek_keywords) / sizeof(sleek_keywords[0]);
+        for(int i = 0; i < len; ++i)
+        {
+            if(strcmp(sleek_keywords[i], varname) == 0)
+            {
+                return strcat(varname, "_k");
+            }
+        }
+        return varname;
+    }
+    else return varname;
+}
+
 void
 sl_record_2sleek (FILE * fout, sl_record_t * r)
 {
@@ -67,12 +85,15 @@ sl_var_2sleek (sl_var_array * args, sl_var_array * lvars, uid_t vid,
 
   uid_t fstlocal = (args == NULL) ? 0 : sl_vector_size (args);
   if (vid >= fstlocal)
-    {
+  {
       vname = sl_var_name (lvars, vid - fstlocal, SL_TYP_RECORD);
-    }
+  }
   else
-    vname = sl_var_name (args, vid, SL_TYP_RECORD);
-  return (vname[0] == '?') ? vname + 1 : vname;
+      vname = sl_var_name (args, vid, SL_TYP_RECORD);
+
+  vname = (vname[0] == '?') ? vname + 1 : vname;
+  vname = trans_sleek_keywords(vname);
+  return vname;
 }
 
 
@@ -114,110 +135,114 @@ sl_space_2sleek (FILE * fout, sl_var_array * args, sl_var_array * lvars,
 		 sl_space_t * form, bool inpred)
 {
 
-  assert (NULL != form);
+    assert (NULL != form);
 
-  // Only pto and ls are allowed, all precise
-  switch (form->kind)
+    // Only pto and ls are allowed, all precise
+    switch (form->kind)
     {
     case SL_SPACE_PTO:
-      {
-	// print source
-	sl_var_array *src_vars = (args == NULL
-				  || (form->m.pto.sid >
-				      sl_vector_size (args))) ? lvars : args;
-	fprintf (fout, "%s::%s",
-		 sl_var_2sleek (args, lvars, form->m.pto.sid, inpred),
-		 sl_record_name (sl_var_record (src_vars, form->m.pto.sid)));
-	// print destinations
-	fprintf (fout, "<");
-	for (size_t i = 0; i < sl_vector_size (form->m.pto.dest); i++)
-	  {
-	    uid_t fi = sl_vector_at (form->m.pto.fields, i);
-	    uid_t vi = sl_vector_at (form->m.pto.dest, i);
-	    fprintf (fout, "%s%s:%s", (i > 0) ? "," : "",
-		     sl_field_name (fi),
-		     sl_var_2sleek (args, lvars, vi, inpred));
-	  }
-	fprintf (fout, ">");
-	break;
-      }
+    {
+        // print source
+        sl_var_array *src_vars = (args == NULL
+                                  || (form->m.pto.sid >
+                                      sl_vector_size (args))) ? lvars : args;
+        fprintf (fout, "%s::%s",
+                 sl_var_2sleek (args, lvars, form->m.pto.sid, inpred),
+                 sl_record_name (sl_var_record (src_vars, form->m.pto.sid)));
+        // print destinations
+        fprintf (fout, "<");
+        for (size_t i = 0; i < sl_vector_size (form->m.pto.dest); i++)
+        {
+            uid_t fi = sl_vector_at (form->m.pto.fields, i);
+            uid_t vi = sl_vector_at (form->m.pto.dest, i);
+            fprintf (fout, "%s%s=%s", (i > 0) ? ", " : "",
+                     sl_field_name (fi),
+                     sl_var_2sleek (args, lvars, vi, inpred));
+        }
+        fprintf (fout, ">");
+        break;
+    }
 
     case SL_SPACE_LS:
-      {
-	// print first argument and predicate
-	fprintf (fout, "%s::%s<",
-		 sl_var_2sleek (args, lvars,
-				sl_vector_at (form->m.ls.args, 0), inpred),
-		 sl_pred_name (form->m.ls.pid));
-	// print remainder arguments
-	sl_var_array_2sleek (fout, args, lvars, form->m.ls.args, 1, inpred);
-	fprintf (fout, ">");
-	break;
-      }
+    {
+        // print first argument and predicate
+        fprintf (fout, "%s::%s<",
+                 sl_var_2sleek (args, lvars,
+                                sl_vector_at (form->m.ls.args, 0), inpred),
+                 sl_pred_name (form->m.ls.pid));
+        // print remainder arguments
+        sl_var_array_2sleek (fout, args, lvars, form->m.ls.args, 1, inpred);
+        fprintf (fout, ">");
+        break;
+    }
 
     default:
-      {
-	sl_error (1, "sl_space_2sleek:", "spatial formula not LS or PTO");
-      }
+    {
+        sl_error (1, "sl_space_2sleek:", "spatial formula not LS or PTO");
+    }
     }
 }
 
 void
 sl_form_2sleek (FILE * fout, sl_form_t * form)
 {
-  assert (NULL != fout);
-  assert (NULL != form);
+    assert (NULL != fout);
+    assert (NULL != form);
 
-  size_t nbc = 0;
+    size_t nbc = 0;
 
-  // start with spatial formulas
-  // Only ssep atomic formulas
+    // start with spatial formulas
+    // Only ssep atomic formulas
 
-  if (form->space != NULL)
+    if (form->space != NULL)
     {
 
-      switch (form->space->kind)
-	{
-	case SL_SPACE_PTO:
-	case SL_SPACE_LS:
-	  {
+        switch (form->space->kind)
+        {
+        case SL_SPACE_PTO:
+        case SL_SPACE_LS:
+        {
 
-	    if (nbc > 0)
-	      fprintf (fout, " * ");
-	    sl_space_2sleek (fout, NULL, form->lvars, form->space, false);
-	    nbc++;
-	    break;
-	  }
-	case SL_SPACE_SSEP:
-	  {
-	    for (size_t i = 0; i < sl_vector_size (form->space->m.sep); i++)
-	      {
-		if (nbc > 0)
-		  fprintf (fout, " * ");
-		sl_space_2sleek (fout, NULL, form->lvars,
-				 sl_vector_at (form->space->m.sep, i), false);
-		fflush (fout);
-		nbc++;
-	      }
-	    break;
-	  }
-	default:
-	  {
-	    sl_error (1, "sl_form_2sleek:", "not a PTO, LS, SSEP formula");
-	    return;
-	  }
-	}
+            if (nbc > 0)
+                fprintf (fout, " * ");
+            sl_space_2sleek (fout, NULL, form->lvars, form->space, false);
+            nbc++;
+            break;
+        }
+        case SL_SPACE_SSEP:
+        {
+            for (size_t i = 0; i < sl_vector_size (form->space->m.sep); i++)
+            {
+                if (nbc > 0)
+                    fprintf (fout, " * ");
+                sl_space_2sleek (fout, NULL, form->lvars,
+                                 sl_vector_at (form->space->m.sep, i), false);
+                fflush (fout);
+                nbc++;
+            }
+            break;
+        }
+        default:
+        {
+            sl_error (1, "sl_form_2sleek:", "not a PTO, LS, SSEP formula");
+            return;
+        }
+        }
+    }
+    else {
+        fprintf (fout, "emp");
+        nbc++;
     }
 
-  // start with spatial formula
-  for (size_t i = 0; i < sl_vector_size (form->pure); i++)
+    // start with spatial formula
+    for (size_t i = 0; i < sl_vector_size (form->pure); i++)
     {
-      if (nbc > 0)
-	fprintf (fout, " & ");
-      sl_pure_2sleek (fout, NULL, form->lvars, sl_vector_at (form->pure, i),
-		      false);
-      fflush (fout);
-      nbc++;
+        if (nbc > 0)
+            fprintf (fout, " & ");
+        sl_pure_2sleek (fout, NULL, form->lvars, sl_vector_at (form->pure, i),
+                        false);
+        fflush (fout);
+        nbc++;
     }
 
 
@@ -229,65 +254,65 @@ sl_form_2sleek (FILE * fout, sl_form_t * form)
 void
 sl_pred_case_2sleek (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
 {
-  assert (NULL != fout);
-  assert (NULL != args);
-  assert (NULL != c);
+    assert (NULL != fout);
+    assert (NULL != args);
+    assert (NULL != c);
 
-  size_t nbc = 0;
+    size_t nbc = 0;
 
-  fprintf (fout, "(");
-  // start with existentials
-  if (c->lvars != NULL && !sl_vector_empty (c->lvars))
+    // fprintf (fout, "(");
+    // start with existentials
+    if (c->lvars != NULL && !sl_vector_empty (c->lvars))
     {
-      fprintf (fout, "exists ");
-      for (size_t i = 0; i < sl_vector_size (c->lvars); i++)
-	{
-	  if (i > 0)
-	    fprintf (fout, ",");
-	  fprintf (fout, "%s",
-		   sl_var_2sleek (args, c->lvars, c->argc + i + 1, true));
-	}
-      fprintf (fout, ": ");
+        fprintf (fout, "exists ");
+        for (size_t i = 0; i < sl_vector_size (c->lvars); i++)
+        {
+            if (i > 0)
+                fprintf (fout, ",");
+            fprintf (fout, "%s",
+                     sl_var_2sleek (args, c->lvars, c->argc + i + 1, true));
+        }
+        fprintf (fout, ": ");
     }
 
-  // start with spatial formulas
-  for (size_t i = 0; i < sl_vector_size (c->space); i++)
+    // start with spatial formulas
+    for (size_t i = 0; i < sl_vector_size (c->space); i++)
     {
-      if (nbc > 0)
-	fprintf (fout, " * ");
-      sl_space_2sleek (fout, args, c->lvars, sl_vector_at (c->space, i), true);	// in predicate
-      fflush (fout);
-      nbc++;
+        if (nbc > 0)
+            fprintf (fout, " * ");
+        sl_space_2sleek (fout, args, c->lvars, sl_vector_at (c->space, i), true);	// in predicate
+        fflush (fout);
+        nbc++;
     }
 
-  // continue with pure formula
-  for (size_t i = 0; i < sl_vector_size (c->pure); i++)
+    // continue with pure formula
+    for (size_t i = 0; i < sl_vector_size (c->pure); i++)
     {
-      if (nbc > 0)
-	fprintf (fout, " & ");
-      else {
-	fprintf (fout, " emp & ");
-	nbc++;
-      }
-      sl_pure_2sleek (fout, args, c->lvars, sl_vector_at (c->pure, i), true);	// in predicate
-      fflush (fout);
-      nbc++;
+        if (nbc > 0)
+            fprintf (fout, " & ");
+        else {
+            fprintf (fout, " emp & ");
+            nbc++;
+        }
+        sl_pure_2sleek (fout, args, c->lvars, sl_vector_at (c->pure, i), true);	// in predicate
+        fflush (fout);
+        nbc++;
     }
-    
-  if (nbc == 0) {
-    // maybe emp or junk
-    if (c->is_precise)
-       fprintf (fout, "emp");
-    else
-       fprintf (fout, "true");
-    nbc++;
-  }
 
-  fprintf (fout, ")");
+    if (nbc == 0) {
+        // maybe emp or junk
+        if (c->is_precise)
+            fprintf (fout, "emp");
+        else
+            fprintf (fout, "true");
+        nbc++;
+    }
 
-  SL_DEBUG ("\t nbc=%zu\n", nbc);
+    // fprintf (fout, ")");
 
-  assert (nbc > 0);
+    SL_DEBUG ("\t nbc=%zu\n", nbc);
+
+    assert (nbc > 0);
 
 }
 
@@ -301,7 +326,7 @@ sl_pred_2sleek (FILE * fout, sl_pred_t * p)
   SL_DEBUG ("Defs %s ...\n", p->pname);
 
   assert (NULL != p->def);
-  
+
   // print predicate instance
   fprintf (fout, "\npred %s<", p->pname);
   for (size_t vi = 2; vi <= p->def->argc; vi++)
@@ -341,7 +366,7 @@ sl_prob_2sleek (const char *fname)
 
   /* Output filename */
   char *fname_out = (char *) malloc (strlen (fname) + 10);
-  snprintf (fname_out, strlen (fname) + 10, "%s.sle", fname);
+  snprintf (fname_out, strlen (fname) + 10, "%s.slk", fname);
 
   /* Output file */
   sl_message ("\tOutput file: ");
@@ -353,7 +378,7 @@ sl_prob_2sleek (const char *fname)
       return;
     }
 
-  // Translates records, without void  
+  // Translates records, without void
   for (size_t i = 1; i < sl_vector_size (records_array); i++)
     {
       sl_record_2sleek (fout, sl_vector_at (records_array, i));
