@@ -125,11 +125,11 @@ sl_space_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
         sl_var_array *src_vars = (args == NULL
                                   || (form->m.pto.sid >
                                       sl_vector_size (args))) ? lvars : args;
-        fprintf (fout, "%s::%s",
+        fprintf (fout, "%s->%s",
                  sl_var_2songbird (args, lvars, form->m.pto.sid, inpred),
                  sl_record_name (sl_var_record (src_vars, form->m.pto.sid)));
         // print destinations
-        fprintf (fout, "<");
+        fprintf (fout, "{");
         for (size_t i = 0; i < sl_vector_size (form->m.pto.dest); i++)
           {
             uid_t fi = sl_vector_at (form->m.pto.fields, i);
@@ -138,7 +138,7 @@ sl_space_2songbird (FILE * fout, sl_var_array * args, sl_var_array * lvars,
                      sl_field_name (fi),
                      sl_var_2songbird (args, lvars, vi, inpred));
           }
-        fprintf (fout, ">");
+        fprintf (fout, "}");
         break;
       }
 
